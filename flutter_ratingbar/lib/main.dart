@@ -1,109 +1,185 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(new MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Flutter Demo',
-      theme: new ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or press Run > Flutter Hot Reload in IntelliJ). Notice that the
-        // counter didn't reset back to zero; the application is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: new MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  _MyHomePageState createState() => new _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return new Scaffold(
-      appBar: new AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: new Text(widget.title),
-      ),
-      body: new Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: new Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug paint" (press "p" in the console where you ran
-          // "flutter run", or select "Toggle Debug Paint" from the Flutter tool
-          // window in IntelliJ) to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            new Text(
-              'You have pushed the button this many times:',
+    final appTitle = 'Flutter 评分控件';
+    return MaterialApp(
+      title: appTitle,
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text(appTitle),
+        ),
+        body: new Center(
+            child:new Container(
+              width: 200.0,
+              height: 50.0,
+              child: StarRatingBarWidget(
+                rating: 3.5,
+                starSize: 36.0,
+                starCount: 5,
+                color: Colors.amber,
+                onRatingCallback: (ratingValue) {
+                  print('当前选了:$ratingValue分');
+                },
+              ),
             ),
-            new Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
         ),
       ),
-      floatingActionButton: new FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: new Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
+
+///评分数值变化回调
+typedef void RatingChangeCallback(double rating);
+
+
+///创建一个StarRatingBar Widget
+class StarRatingBarWidget extends StatefulWidget {
+  final double rating;
+  final int starCount;
+  final double starSize;
+  final Color color;
+  final RatingChangeCallback onRatingCallback;
+
+  StarRatingBarWidget(
+      {Key key,
+        this.onRatingCallback,
+        this.rating = 0.0,
+        this.starCount,
+        this.starSize,
+        this.color});
+
+  @override
+  StarRatingBarState createState() {
+    return StarRatingBarState(
+        onRatingCallback: this.onRatingCallback,
+        rating: this.rating,
+        starCount: this.starCount,
+        starSize: this.starSize,
+        color: this.color);
+  }
+}
+
+///创建一个 StarRatingBar State
+class StarRatingBarState extends State<StarRatingBarWidget> {
+  double rating;
+  final int starCount;
+  final double starSize;
+  final Color color;
+  final RatingChangeCallback onRatingCallback;
+
+  StarRatingBarState(
+      {this.onRatingCallback,
+        this.rating,
+        this.starCount,
+        this.starSize,
+        this.color});
+
+  ///通过滑动的距离来计算出当前评分数值
+  double getRatingValue(double dragDx) {
+    if (dragDx <= 0) return 0.0;
+    //评分控件宽度
+    double totalWidth = starSize * starCount + 4;
+    //单个星星占据的空间距离
+    double singleDistance = totalWidth / starCount + 2;
+    for (int i = 1; i <= starCount; i++) {
+      if (dragDx < singleDistance * i) {
+        if (dragDx < singleDistance * (i * 2 - 1) / 2) {
+          return (i * 2 - 1) / 2;
+        }
+        return i * 1.0;
+      }
+    }
+    return starCount * 1.0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    void postInvalidateRatingValue(double rating) {
+      this.onRatingCallback(rating);
+      setState(() {
+        this.rating = rating;
+      });
+    }
+
+    return new GestureDetector(
+      //水平拖拽位置更新,注意:onRatingCallback此处做非空判断,如果为空,则不处理水平滑动手势
+      onHorizontalDragUpdate: onRatingCallback == null? null : (DragUpdateDetails details) {
+        RenderBox getBox = context.findRenderObject();
+        //details.globalPosition更新时显示的全局位置Offset
+        //globalToLocal将全局坐标转换为当前盒子内部的坐标
+        double dragDx = getBox.globalToLocal(details.globalPosition).dx;
+        print("当前控件内部滑动距离:$dragDx");
+        postInvalidateRatingValue(getRatingValue(dragDx));
+      },
+      child: new StarRating(
+        rating: this.rating,
+        starCount: this.starCount,
+        starSize: this.starSize,
+        color: this.color,
+        //注意:此处也做onRatingCallback非空判断,如果为空不做点击操作响应
+        onRatingChanged: onRatingCallback == null ? null: (rating) => postInvalidateRatingValue(rating),
+      ),
+    );
+  }
+}
+
+///构建星星列表
+class StarRating extends StatelessWidget {
+  final int starCount;
+  final double rating;
+  final double starSize;
+  final Color color;
+  final RatingChangeCallback onRatingChanged;
+
+  StarRating(
+      {@required this.starCount,
+        @required this.starSize,
+        this.rating,
+        this.onRatingChanged,
+        this.color});
+
+  Widget buildStar(BuildContext context, int index) {
+    Icon icon;
+    if (index >= rating) {
+      icon = new Icon(
+        Icons.star_border,
+        color: Theme.of(context).buttonColor,
+        size: starSize,
+      );
+    } else if (index > rating - 1 && index < rating) {
+      icon = new Icon(
+        Icons.star_half,
+        color: color ?? Theme.of(context).primaryColor,
+        size: starSize,
+      );
+    } else {
+      icon = new Icon(
+        Icons.star,
+        color: color ?? Theme.of(context).primaryColor,
+        size: starSize,
+      );
+    }
+    ///如果你对水波纹有迷之热爱,你可以用InkResponse/InkWell/IconButton等包装即可
+    return new GestureDetector(
+      onTap:
+      onRatingChanged == null ? null : () => onRatingChanged(index + 1.0),
+      child: icon,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //生成水平展示的星星列表
+    return new Row(
+        children:
+        new List.generate(starCount, (index) => buildStar(context, index)));
+  }
+}
+
