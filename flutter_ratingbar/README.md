@@ -1,8 +1,4 @@
-# flutter_ratingbar
+知乎了解下:
+https://www.zhihu.com/people/qiang-fu-5-67/activities
 
-Flutter Ratingbar
-
-## Getting Started
-
-For help getting started with Flutter, view our online
-[documentation](https://flutter.io/).
+# Flutter评分控件
